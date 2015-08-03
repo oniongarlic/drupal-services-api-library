@@ -112,7 +112,7 @@ return $response;
 }
 
 // 'create' or 'create_raw'
-public function upload_file($filename)
+public function upload_file($filename, $manage=true)
 {
 if(!file_exists($filename))
 	throw new DrupalServiceException('File does not exist', 404);
@@ -123,10 +123,10 @@ $file=array(
 	'filesize' => filesize($filename),
 	'filename' => basename($filename),
 	'file' => base64_encode(file_get_contents($filename)),
-	'uid' => $this->uid,
-);
+	'uid' => $this->uid);
+if (!$manage)
+	$file['status']=0;
 
-//$data=http_build_query($file);
 $data=json_encode($file);
 $r=$this->executePOST('file.json', $data);
 return json_decode($r);
@@ -160,10 +160,13 @@ return json_decode($r);
 
 public function create_node($type, $title, array $fields=null)
 {
-$data=array('title'=>$title, 'type'=>$type);
+$data=array(
+	'title'=>$title,
+	'type'=>$type,
+	'language'=>DRUPAL_LANGUAGE_NONE);	
 if (is_array($fields)) {
 	foreach ($fields as $field=>$content) {
-		$data[$field]=is_array($content) ? $content : array('und'=>array('value'=>$content));
+		$data[$field]=is_array($content) ? $content : array(DRUPAL_LANGUAGE_NONE=>array('value'=>$content));
 	}
 }
 $json=json_encode($data);
