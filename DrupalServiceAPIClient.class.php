@@ -146,7 +146,7 @@ public function create_node($type, $title, array $fields=null)
 $data=array('title'=>$title, 'type'=>$type);
 if (is_array($fields)) {
 	foreach ($fields as $field=>$content) {
-		$data[$field]=array('und'=>array('value'=>$content));
+		$data[$field]=is_array($content) ? $content : array('und'=>array('value'=>$content));
 	}
 }
 $json=json_encode($data);
