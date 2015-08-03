@@ -11,7 +11,7 @@ class DrupalServiceAPIClient
 {
 // API url
 protected $url;
-
+protected $debug=false;
 protected $uid=1;
 
 // Basic auth username and password
@@ -36,6 +36,11 @@ $this->username=$username;
 $this->password=$password;
 }
 
+public function set_debug($bool)
+{
+$this->debug=$bool;
+}
+
 private function getcurl($url)
 {
 $curl=curl_init($url);
@@ -53,15 +58,24 @@ curl_setopt_array($curl, $options);
 return $curl;
 }
 
+protected function dumpDebug($endpoint, $data=null)
+{
+if (!$this->debug)
+	return;
+
+printf("API Endpoint: %s\nData:\n", $endpoint);
+print_r($data);
+}
+
 protected function executeGET($endpoint)
 {
 $url=$this->url.'/'.$endpoint;
-print_r($url);
 $curl=$this->getcurl($url);
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
 
-$response=curl_exec($curl);
+$this->dumpDebug($endpoint);
 
+$response=curl_exec($curl);
 $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
 if ($status===0)
@@ -81,8 +95,9 @@ $curl=$this->getcurl($url);
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
 
-$response=curl_exec($curl);
+$this->dumpDebug($endpoint, $data);
 
+$response=curl_exec($curl);
 $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
 if ($status===0)
