@@ -5,6 +5,8 @@
  *
  */
 
+define('DRUPAL_LANGUAGE_NONE', 'und');
+
 class DrupalServiceException extends Exception { }
 
 class DrupalServiceAPIClient
