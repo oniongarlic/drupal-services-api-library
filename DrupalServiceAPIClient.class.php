@@ -7,6 +7,10 @@
 
 define('DRUPAL_LANGUAGE_NONE', 'und');
 
+define('AUTH_ANONYMOUS', 0);
+define('AUTH_BASIC', 1);
+define('AUTH_SESSION', 2);
+
 class DrupalServiceException extends Exception { }
 
 class DrupalServiceAPIClient
@@ -17,8 +21,11 @@ protected $debug=false;
 protected $uid=1;
 
 // Basic auth username and password
+protected $auth=0;
 protected $username;
 protected $password;
+private $session_cookie=null;
+private $csrf_token;
 
 // API key auth (WIP)
 protected $apikey;
@@ -28,7 +35,12 @@ function __construct($url)
 $this->url=$url;
 }
 
-public function set_basic_auth($username, $password)
+public function set_auth_type($t)
+{
+$this->auth=$t;
+}
+
+public function set_auth($username, $password)
 {
 if (!is_string($username))
 	throw new DrupalServiceException('Invalid username', 500);
@@ -36,6 +48,22 @@ if (!is_string($password))
 	throw new DrupalServiceException('Invalid password', 500);
 $this->username=$username;
 $this->password=$password;
+}
+
+public function login()
+{
+switch ($this->auth) {
+	case AUTH_ANONYMOUS:
+		return true;
+	case AUTH_SESSION:
+		return $this->login_session();
+	break;
+	case AUTH_BASIC:
+		return true;	
+	break;
+	default:
+		throw new DrupalServiceException('Unknown authentication selected', 0);
+}
 }
 
 public function set_debug($bool)
@@ -51,11 +79,19 @@ $options=array(
 	CURLOPT_HEADER => FALSE,
 	CURLOPT_RETURNTRANSFER => TRUE,
 	CURLINFO_HEADER_OUT => TRUE,
-	CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-	CURLOPT_USERPWD => $this->username.':'.$this->password,
 	CURLOPT_HTTPHEADER => array( 'Content-Type: application/json'));
-
 curl_setopt_array($curl, $options);
+
+switch ($this->auth) {
+	case AUTH_BASIC:
+	curl_setopt($curl, CURLOPT_HTTPAUT, CURLAUTH_BASIC);
+	curl_setopt($curl, CURLOPT_USERPWD, $this->username.':'.$this->password);
+	break;
+	case AUTH_SESSION:
+	if (is_string($this->session_cookie))
+		curl_setopt($curl, CURLOPT_COOKIE, $this->session_cookie);
+	break;
+}
 
 return $curl;
 }
@@ -110,6 +146,28 @@ if ($status!==200)
 curl_close($curl);
 return $response;
 }
+
+/**
+ * User
+ */
+ 
+protected function login_session()
+{
+$user=array(
+	'username'=>$this->username,
+	'password'=>$this->password,
+);
+
+$data=json_encode($user);
+$r=$this->executePOST('user/login.json', $data);
+print_r($r);
+$this->session_cookie=$r->session_name.'='.$r->sessid;
+return json_decode($r);
+}
+
+/**
+ * Files
+ */
 
 // 'create' or 'create_raw'
 public function upload_file($filename, $manage=true)
