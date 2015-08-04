@@ -182,6 +182,21 @@ $this->uid=$u->user->uid;
 return $u;
 }
 
+public function index_users()
+{
+$r=$this->executeGET('user.json');
+return json_decode($r);
+}
+
+public function retrieve_user($uid)
+{
+if (!is_numeric($uid))
+	throw new DrupalServiceException('Invalid user ID', 500);
+$tmp=sprintf('user/%d.json', $uid);
+$r=$this->executeGET($tmp);
+return json_decode($r);
+}
+
 /**
  * Files
  */
