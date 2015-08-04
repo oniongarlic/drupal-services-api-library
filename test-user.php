@@ -13,4 +13,21 @@ try {
 	die($e->getCode().' : '.$e->getMessage());
 }
 
+try {
+	$fields=array('body'=>
+			array('und'=>
+				array(0=>array(
+					'value'=>'This is some body text.',
+					'summary'=>'API User owned node'
+				)
+			)
+		)
+	);
+	$r=$c->create_node('product', 'API test user owned node', $fields);
+	print_r($r);
+} catch (Exception $e) {
+	die($e->getCode().' : '.$e->getMessage());
+}
+
+
 ?>
