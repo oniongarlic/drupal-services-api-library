@@ -13,6 +13,12 @@ try {
 	die($e->getCode().' : '.$e->getMessage());
 }
 
+$u=$c->index_users();
+print_r($u);
+
+$first=$c->retrieve_user(1);
+print_r($first);
+
 try {
 	$fields=array('body'=>
 			array('und'=>
