@@ -176,7 +176,6 @@ $user=array(
 $data=json_encode($user);
 $r=$this->executePOST('user/login.json', $data);
 $u=json_decode($r);
-print_r($u);
 $this->session_cookie=$u->session_name.'='.$u->sessid;
 $this->csrf_token=$u->token;
 $this->uid=$u->user->uid;
