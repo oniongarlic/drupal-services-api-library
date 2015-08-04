@@ -12,20 +12,21 @@ define('AUTH_BASIC', 1);
 define('AUTH_SESSION', 2);
 
 class DrupalServiceException extends Exception { }
+class DrupalServiceAuthException extends DrupalServiceException { }
 
 class DrupalServiceAPIClient
 {
 // API url
 protected $url;
 protected $debug=false;
-protected $uid=1;
+protected $uid=0;
 
 // Basic auth username and password
 protected $auth=0;
 protected $username;
 protected $password;
 private $session_cookie=null;
-private $csrf_token;
+private $csrf_token=null;
 
 // API key auth (WIP)
 protected $apikey;
@@ -74,12 +75,15 @@ $this->debug=$bool;
 private function getcurl($url)
 {
 $curl=curl_init($url);
+$header=array( 'Content-Type: application/json');
+if (is_string($this->csrf_token))
+	$header[]='X-CSRF-Token: '.$this->csrf_token;
 
 $options=array(
 	CURLOPT_HEADER => FALSE,
 	CURLOPT_RETURNTRANSFER => TRUE,
 	CURLINFO_HEADER_OUT => TRUE,
-	CURLOPT_HTTPHEADER => array( 'Content-Type: application/json'));
+	CURLOPT_HTTPHEADER => $header);
 curl_setopt_array($curl, $options);
 
 switch ($this->auth) {
@@ -105,6 +109,21 @@ printf("API Endpoint: %s\nData:\n", $endpoint);
 print_r($data);
 }
 
+protected function handleStatus($status, $error)
+{
+switch ($status) {
+	case 0:
+		throw new DrupalServiceException('CURL Error: '.$error, $status);
+	case 200:
+		return true;
+	case 401:
+		throw new DrupalServiceAuthException('Authentication error', $status);
+	default:
+		throw new DrupalServiceException('Error: ', $status);
+}
+
+}
+
 protected function executeGET($endpoint)
 {
 $url=$this->url.'/'.$endpoint;
@@ -115,13 +134,11 @@ $this->dumpDebug($endpoint);
 
 $response=curl_exec($curl);
 $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-if ($status===0)
-	throw new DrupalServiceException('CURL Error: '.curl_error($curl));
-if ($status!==200)
-	throw new DrupalServiceException('Error', $status);
-
+$error=curl_error($curl);
 curl_close($curl);
+
+$this->handleStatus($status, $error);
+
 return $response;
 }
 
@@ -137,13 +154,11 @@ $this->dumpDebug($endpoint, $data);
 
 $response=curl_exec($curl);
 $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-if ($status===0)
-	throw new DrupalServiceException('CURL Error: '.curl_error($curl));
-if ($status!==200)
-	throw new DrupalServiceException('Error: ', $status);
-
+$error=curl_error($curl);
 curl_close($curl);
+
+$this->handleStatus($status, $error);
+
 return $response;
 }
 
@@ -160,9 +175,12 @@ $user=array(
 
 $data=json_encode($user);
 $r=$this->executePOST('user/login.json', $data);
-print_r($r);
-$this->session_cookie=$r->session_name.'='.$r->sessid;
-return json_decode($r);
+$u=json_decode($r);
+print_r($u);
+$this->session_cookie=$u->session_name.'='.$u->sessid;
+$this->csrf_token=$u->token;
+$this->uid=$u->user->uid;
+return $u;
 }
 
 /**
@@ -221,6 +239,7 @@ public function create_node($type, $title, array $fields=null)
 $data=array(
 	'title'=>$title,
 	'type'=>$type,
+	'uid'=>$this->uid,
 	'language'=>DRUPAL_LANGUAGE_NONE);	
 if (is_array($fields)) {
 	foreach ($fields as $field=>$content) {
