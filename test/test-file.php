@@ -5,27 +5,24 @@ require_once('../lib/DrupalServiceAPIClient.class.php');
 $c=new DrupalServiceAPIClient('http://drupal.ubctp.tal.org/api/v1');
 $fid=0;
 
-/*
+function upload_file($file)
+{
 try {
-	printf("Uploading text file\n");
-	$r=$c->upload_file('upload-test-file.txt');
+	printf("Uploading file %s\n", $file);
+	$r=$c->upload_file($file, true);
 	print_r($r);
+	return $r->fid;
 } catch (Exception $e) {
 	die($e->getCode().' : '.$e->getMessage());
 }
-*/
-
-try {
-	printf("Uploading image file\n");
-	$r=$c->upload_file('upload-test-image.jpg', true);
-	print_r($r);
-	$fid=$r->fid;
-} catch (Exception $e) {
-	die($e->getCode().' : '.$e->getMessage());
 }
 
+$fid1=upload_file('upload-test-file.txt');
+$fid2=upload_file('upload-test-image-1.jpg');
+$fid3=upload_file('upload-test-image-2.png');
+
 try {
-	printf("Adding a node with uploaded image file %d\n", $fid);
+	printf("Adding a node with uploaded image file %d\n", $fid2);
 	$fields=array(
 		'body'=>array(DRUPAL_LANGUAGE_NONE=>
 			array(array(
@@ -35,7 +32,7 @@ try {
 		),
 		'field_image'=>array(DRUPAL_LANGUAGE_NONE=>
 			array(0=>array(
-				'fid'=>(int)$fid,
+				'fid'=>(int)$fid2,
 				'alt'=>'Test image alt',
 				'title'=>'A uploaded and attached to node field image',
 				'display'=>'1',
@@ -48,7 +45,7 @@ try {
 				'display'=>'1',
 				'_weight'=>2
 			)
-			
+
 			)
 		),
 		'field_weight'=>array(DRUPAL_LANGUAGE_NONE=>
