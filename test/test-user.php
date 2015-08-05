@@ -1,6 +1,6 @@
 #!/usr/bin/php -q
 <?php
-require_once('DrupalServiceAPIClient.class.php');
+require_once('../lib/DrupalServiceAPIClient.class.php');
 
 $c=new DrupalServiceAPIClient('http://drupal.ubctp.tal.org/api/v1');
 $c->set_debug(true);
