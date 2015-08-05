@@ -5,7 +5,7 @@ require_once('../lib/DrupalServiceAPIClient.class.php');
 $c=new DrupalServiceAPIClient('http://drupal.ubctp.tal.org/api/v1');
 $fid=0;
 
-function upload_file($file)
+function upload_file(DrupalServiceAPIClient $c, $file)
 {
 try {
 	printf("Uploading file %s\n", $file);
@@ -17,9 +17,9 @@ try {
 }
 }
 
-$fid1=upload_file('upload-test-file.txt');
-$fid2=upload_file('upload-test-image-1.jpg');
-$fid3=upload_file('upload-test-image-2.png');
+$fid1=upload_file($c, 'upload-test-file.txt');
+$fid2=upload_file($c, 'upload-test-image-1.jpg');
+$fid3=upload_file($c, 'upload-test-image-2.png');
 
 try {
 	printf("Adding a node with uploaded image file %d\n", $fid2);
@@ -39,13 +39,12 @@ try {
 				'_weight'=>1
 			),
 			1=>array(
-				'fid'=>0,
+				'fid'=>(int)$fid3,
 				'alt'=>'Test image alt',
 				'title'=>'A uploaded and attached to node field image',
 				'display'=>'1',
 				'_weight'=>2
 			)
-
 			)
 		),
 		'field_weight'=>array(DRUPAL_LANGUAGE_NONE=>
