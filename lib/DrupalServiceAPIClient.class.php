@@ -109,7 +109,7 @@ printf("API Endpoint: %s\nData:\n", $endpoint);
 print_r($data);
 }
 
-protected function handleStatus($status, $error)
+protected function handleStatus($status, $error, $response)
 {
 switch ($status) {
 	case 0:
@@ -117,9 +117,9 @@ switch ($status) {
 	case 200:
 		return true;
 	case 401:
-		throw new DrupalServiceAuthException('Authentication error', $status);
+		throw new DrupalServiceAuthException('Authentication error: '.$response, $status);
 	default:
-		throw new DrupalServiceException('Error: ', $status);
+		throw new DrupalServiceException($response, $status);
 }
 
 }
@@ -137,7 +137,7 @@ $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
 $error=curl_error($curl);
 curl_close($curl);
 
-$this->handleStatus($status, $error);
+$this->handleStatus($status, $error, $response);
 
 return $response;
 }
@@ -157,7 +157,7 @@ $status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
 $error=curl_error($curl);
 curl_close($curl);
 
-$this->handleStatus($status, $error);
+$this->handleStatus($status, $error, $response);
 
 return $response;
 }
