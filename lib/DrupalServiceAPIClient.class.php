@@ -31,9 +31,18 @@ private $csrf_token=null;
 // API key auth (WIP)
 protected $apikey;
 
+// Current language
+protected $language;
+
 function __construct($url)
 {
 $this->url=$url;
+$this->language=DRUPAL_LANGUAGE_NONE;
+}
+
+public function set_language($l)
+{
+$this->language=$l;
 }
 
 public function set_auth_type($t)
@@ -142,6 +151,24 @@ $this->handleStatus($status, $error, $response);
 return $response;
 }
 
+protected function executeDELETE($endpoint)
+{
+$url=$this->url.'/'.$endpoint;
+$curl=$this->getcurl($url);
+curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+
+$this->dumpDebug($endpoint);
+
+$response=curl_exec($curl);
+$status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
+$error=curl_error($curl);
+curl_close($curl);
+
+$this->handleStatus($status, $error, $response);
+
+return $response;
+}
+
 protected function executePOST($endpoint, $data)
 {
 $url=$this->url.'/'.$endpoint;
@@ -162,10 +189,30 @@ $this->handleStatus($status, $error, $response);
 return $response;
 }
 
-/**
+protected function executePUT($endpoint, $data)
+{
+$url=$this->url.'/'.$endpoint;
+
+$curl=$this->getcurl($url);
+curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+
+$this->dumpDebug($endpoint, $data);
+
+$response=curl_exec($curl);
+$status=curl_getinfo($curl, CURLINFO_HTTP_CODE);
+$error=curl_error($curl);
+curl_close($curl);
+
+$this->handleStatus($status, $error, $response);
+
+return $response;
+}
+
+/*******************************************************************
  * User
- */
- 
+ *******************************************************************/
+
 protected function login_session()
 {
 $user=array(
@@ -197,9 +244,9 @@ $r=$this->executeGET($tmp);
 return json_decode($r);
 }
 
-/**
+/******************************************************************
  * Files
- */
+ ******************************************************************/
 
 // 'create' or 'create_raw'
 public function upload_file($filename, $manage=true)
@@ -239,6 +286,10 @@ $r=$this->executeGET('file.json');
 return json_decode($r);
 }
 
+/******************************************************************
+ * Nodes
+ ******************************************************************/
+
 public function retrieve_node($nid)
 {
 if (!is_numeric($nid))
@@ -248,32 +299,44 @@ $r=$this->executeGET($tmp);
 return json_decode($r);
 }
 
-public function create_node($type, $title, array $fields=null)
+protected function prepare_node_fields($title, $type, array $fields=null)
 {
 $data=array(
-	'title'=>$title,
-	'type'=>$type,
 	'uid'=>$this->uid,
-	'language'=>DRUPAL_LANGUAGE_NONE);	
+	'language'=>$this->language);
+if (is_string($title))
+	$data['title']=$title;
+if (is_string($type))
+	$data['type']=$type;
+
 if (is_array($fields)) {
 	foreach ($fields as $field=>$content) {
-		$data[$field]=is_array($content) ? $content : array(DRUPAL_LANGUAGE_NONE=>array('value'=>$content));
+		$data[$field]=is_array($content) ? $content : array($this->language=>array('value'=>$content));
 	}
 }
-$json=json_encode($data);
-$r=$this->executePOST('node.json', $json);
+return $data;
+}
+
+public function create_node($type, $title, array $fields=null)
+{
+$r=$this->executePOST('node.json', json_encode($this->prepare_node_fields($title, $type, $fields)));
 return json_decode($r);
 }
 
-public function update_node($nid, array $fields)
+public function update_node($nid, $title, array $fields)
 {
+$r=$this->executePUT(sprintf('node/%d.json', $nid), json_encode($this->prepare_node_fields($title, null, $fields)));
+return json_decode($r);
 }
 
 public function delete_node($nid)
 {
 if (!is_numeric($nid))
 	throw new DrupalServiceException('Invalid node ID', 500);
-return false;
+if ($nid<0)
+	throw new DrupalServiceException('Invalid node ID', 500);
+$r=$this->executeDELETE(sprintf('node/%d.json', $nid));
+return json_decode($r);
 }
 
 public function index_nodes()
