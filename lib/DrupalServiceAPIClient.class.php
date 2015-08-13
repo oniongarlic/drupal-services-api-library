@@ -133,9 +133,12 @@ switch ($status) {
 
 }
 
-protected function executeGET($endpoint)
+protected function executeGET($endpoint, array $query=null)
 {
 $url=$this->url.'/'.$endpoint;
+if (is_array($query))
+	$curl.='?'.http_build_query($query);
+
 $curl=$this->getcurl($url);
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
 
@@ -339,9 +342,9 @@ $r=$this->executeDELETE(sprintf('node/%d.json', $nid));
 return json_decode($r);
 }
 
-public function index_nodes()
+public function index_nodes(array $filter=null)
 {
-$r=$this->executeGET('node.json');
+$r=$this->executeGET('node.json', $filter);
 return json_decode($r);
 }
 
