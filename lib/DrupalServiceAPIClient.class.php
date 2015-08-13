@@ -137,7 +137,7 @@ protected function executeGET($endpoint, array $query=null)
 {
 $url=$this->url.'/'.$endpoint;
 if (is_array($query))
-	$curl.='?'.http_build_query($query);
+	$url.='?'.http_build_query($query);
 
 $curl=$this->getcurl($url);
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
