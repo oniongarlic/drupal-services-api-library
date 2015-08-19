@@ -34,6 +34,9 @@ protected $apikey;
 // Current language
 protected $language;
 
+// Product currency
+protected $currency='EUR';
+
 function __construct($url)
 {
 $this->url=$url;
@@ -43,6 +46,11 @@ $this->language=DRUPAL_LANGUAGE_NONE;
 public function set_language($l)
 {
 $this->language=$l;
+}
+
+public function set_currency($c)
+{
+$this->currency=$c;
 }
 
 public function set_auth_type($t)
@@ -351,7 +359,7 @@ $param=array(
 if (is_array($fields))
 	$param['fields']=$fields;
 if (is_array($params))
-	$param['parameters']=$param;
+	$param['parameters']=$params;
 
 $r=$this->executeGET('node.json', $param);
 return json_decode($r);
@@ -361,14 +369,16 @@ return json_decode($r);
  * Commerce Product
  ******************************************************************/
 
-protected function prepare_product_fields($type, $sku, $title, array $fields=null)
+protected function prepare_product_fields($type, $sku, $title, $price, array $fields=null)
 {
+// Type, Title, SKU, commerce_price_amount and commerce_price_currency_code are always required for products
 $data=array(
 	'uid'=>$this->uid,
-	'language'=>$this->language,
 	'title'=>$title,
 	'sku'=>$sku,
-	'type'=>$type
+	'type'=>$type,
+	'commerce_price_amount'=>$price,
+	'commerce_price_currency_code'=>$this->currency
 );
 
 if (is_array($fields)) {
@@ -379,7 +389,7 @@ if (is_array($fields)) {
 return $data;
 }
 
-public function create_product($type, $sku, $title, array $fields=null)
+public function create_product($type, $sku, $title, $price, array $fields=null)
 {
 if (!is_string($type) || trim($type)=='')
 	throw new DrupalServiceException('Invalid product type', 500);
@@ -387,7 +397,9 @@ if (!is_string($sku) || trim($sku)=='')
 	throw new DrupalServiceException('Invalid product SKU', 500);
 if (!is_string($title) || trim($title)=='')
 	throw new DrupalServiceException('Invalid product title', 500);
-$r=$this->executePOST('product.json', json_encode($this->prepare_product_fields($type, $sku, $title, $fields)));
+if (!is_numeric($price) || $price<0)
+	throw new DrupalServiceException('Invalid product price', 500);
+$r=$this->executePOST('product.json', json_encode($this->prepare_product_fields($type, $sku, $title, $price, $fields)));
 return json_decode($r);
 }
 
