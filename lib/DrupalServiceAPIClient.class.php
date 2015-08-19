@@ -357,5 +357,39 @@ $r=$this->executeGET('node.json', $param);
 return json_decode($r);
 }
 
+/******************************************************************
+ * Commerce Product
+ ******************************************************************/
+
+protected function prepare_product_fields($type, $sku, $title, array $fields=null)
+{
+$data=array(
+	'uid'=>$this->uid,
+	'language'=>$this->language,
+	'title'=>$title,
+	'sku'=>$sku,
+	'type'=>$type
+);
+
+if (is_array($fields)) {
+	foreach ($fields as $field=>$content) {
+		$data[$field]=is_array($content) ? $content : array($this->language=>array('value'=>$content));
+	}
+}
+return $data;
+}
+
+public function create_product($type, $sku, $title, array $fields=null)
+{
+if (!is_string($type) || trim($type)=='')
+	throw new DrupalServiceException('Invalid product type', 500);
+if (!is_string($sku) || trim($sku)=='')
+	throw new DrupalServiceException('Invalid product SKU', 500);
+if (!is_string($title) || trim($title)=='')
+	throw new DrupalServiceException('Invalid product title', 500);
+$r=$this->executePOST('product.json', json_encode($this->prepare_product_fields($type, $sku, $title, $fields)));
+return json_decode($r);
+}
+
 }
 ?>
