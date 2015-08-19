@@ -342,9 +342,18 @@ $r=$this->executeDELETE(sprintf('node/%d.json', $nid));
 return json_decode($r);
 }
 
-public function index_nodes(array $filter=null)
+public function index_nodes($page=0, $pagesize=20, array $fields=null, array $params=null)
 {
-$r=$this->executeGET('node.json', $filter);
+$param=array(
+	'page'=>$page,
+	'pagesize'=>$pagesize
+);
+if (is_array($fields))
+	$param['fields']=$fields;
+if (is_array($params))
+	$param['parameters']=$param;
+
+$r=$this->executeGET('node.json', $param);
 return json_decode($r);
 }
 
