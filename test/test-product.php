@@ -46,17 +46,19 @@ try {
 	$c->set_debug(true);
 
 	// Simple
-        $r=$c->create_product('product', 'SKU-1234567890', 'Product add test 1', 10000);
-        print_r($r);
+        $r1=$c->create_product('product', 'SKU-1234567890', 'Product add test 1', 10000);
+        print_r($r1);
 
 	// Flattened format ?
 	$images=array();
 	$images[]=array('fid'=>$fid1);
 	$fields=array('field_image'=>$images);
 
-        $r=$c->create_product('product', 'SKU-1234567891', 'Product add test 2', 1234567, $fields);
-        print_r($r);
+        $r2=$c->create_product('product', 'SKU-1234567891', 'Product add test 2', 1234567, $fields);
+        print_r($r2);
 
+	$c->delete_product($r1->product_id);
+	$c->delete_product($r2->product_id);
 } catch (Exception $e) {
         die($e->getCode().' : '.$e->getMessage());
 }
