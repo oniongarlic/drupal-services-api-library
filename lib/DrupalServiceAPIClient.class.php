@@ -403,5 +403,16 @@ $r=$this->executePOST('product.json', json_encode($this->prepare_product_fields(
 return json_decode($r);
 }
 
+public function delete_product($pid)
+{
+if (!is_numeric($pid))
+	throw new DrupalServiceException('Invalid product ID', 500);
+if ($pid<0)
+	throw new DrupalServiceException('Invalid product ID', 500);
+$this->executeDELETE(sprintf('product/%d.json', $pid));
+// We return true ok success blindly, as any error code (404, etc) throws an exception
+return true;
+}
+
 }
 ?>
