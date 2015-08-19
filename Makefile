@@ -1,5 +1,5 @@
 PHPLIB=DrupalServiceAPIClient.class.php
-PHPTEST=test-node.php test-file.php test-user.php
+PHPTEST=test-node.php test-file.php test-user.php test-product.php
 
 check: check-lib check-test
 
