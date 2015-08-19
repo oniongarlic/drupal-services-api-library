@@ -47,6 +47,9 @@ try {
 			)
 			)
 		),
+		'field_sku'=>array(DRUPAL_LANGUAGE_NONE=>
+			array(array('value'=>'AAABBBJNASDKNASKN1231231'))
+		),
 		'field_weight'=>array(DRUPAL_LANGUAGE_NONE=>
 			array(array(
 				'weight'=>512
