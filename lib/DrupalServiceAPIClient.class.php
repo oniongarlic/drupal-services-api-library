@@ -373,7 +373,6 @@ protected function prepare_product_fields($type, $sku, $title, $price, array $fi
 {
 // Type, Title, SKU, commerce_price_amount and commerce_price_currency_code are always required for products
 $data=array(
-	'uid'=>$this->uid,
 	'title'=>$title,
 	'sku'=>$sku,
 	'type'=>$type,
@@ -381,9 +380,13 @@ $data=array(
 	'commerce_price_currency_code'=>$this->currency
 );
 
+// XXX 'uid'=>$this->uid
+
 if (is_array($fields)) {
 	foreach ($fields as $field=>$content) {
-		$data[$field]=is_array($content) ? $content : array($this->language=>array('value'=>$content));
+		// Using flat API !
+		//$data[$field]=is_array($content) ? $content : array($this->language=>array('value'=>$content));
+		$data[$field]=$content
 	}
 }
 return $data;
